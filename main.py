@@ -5,11 +5,20 @@ proximo_id_usuario = 1
 proximo_id_postagem = 1
 
 # funções
+def resetar():
+    global proximo_id_usuario
+    global proximo_id_postagem
+    global usuarios
+    global postagens
+    usuarios.clear()
+    postagens.clear()
+    proximo_id_usuario = 1
+    proximo_id_postagem = 1
 
 def criar_usuario(nome):
     global proximo_id_usuario
     if nome == '':
-        raise ValueError("Nome não pode ser vazio")
+        raise Exception
     usuario = {
         'id':proximo_id_usuario,
         'nome':nome,
@@ -20,79 +29,106 @@ def criar_usuario(nome):
     proximo_id_usuario += 1
 
 
-def criar_postagem(usuario_id, texto):
+def criar_postagem(usuario, texto):
     global proximo_id_postagem
-    if texto == '':
-        raise ValueError("Texto não pode ser vazio")
-    
-    usuario = encontrar_usuario_por_id(usuario_id)
-    postagem = {
-        'id': proximo_id_postagem,
-        'usuario_id': usuario_id,
-        'texto': texto,
-        'curtidas': [],
-        'comentarios': []
-    }
-    postagens.append(postagem)
-    proximo_id_postagem += 1
-    
-    
-def seguir_usuario(usuario_seguidor_id, usuario_a_seguir_id):
-    if usuario_seguidor_id == usuario_a_seguir_id:
-        return  # Não fazer nada se o usuário tentar seguir a si mesmo.
-    
+
+    if texto == "":
+        raise Exception
+
     try:
-        usuario_seguidor = encontrar_usuario_por_id(usuario_seguidor_id)
-        usuario_a_seguir = encontrar_usuario_por_id(usuario_a_seguir_id)
-    except IndexError:
-        raise IndexError("Usuário não encontrado")
+        encontrar_usuario_por_id(usuario)
+        postagem = {
+            'id': proximo_id_postagem,
+            'usuario': usuario,
+            'mensagem': texto,
+            'curtidores':[]
+        }
+        postagens.append(postagem)
+        proximo_id_postagem += 1
+    except IndexError as error:
+        raise IndexError
+  
+# Função para seguir um usuário
+def seguir_usuario(usuario_seguidor, usuario_a_seguir):
+    if usuario_seguidor == usuario_a_seguir:  # Verifica se o usuário tenta seguir a si mesmo
+        raise Exception("Não é possível seguir a si mesmo")
+    usuario_seguidor_obj = encontrar_usuario_por_id(usuario_seguidor)  # Encontra o usuário seguidor
+    usuario_a_seguir_obj = encontrar_usuario_por_id(usuario_a_seguir)  # Encontra o usuário a ser seguido
     
-    if usuario_a_seguir_id not in usuario_seguidor['seguindo']:
-        usuario_seguidor['seguindo'].append(usuario_a_seguir_id)
-        usuario_a_seguir['seguidores'].append(usuario_seguidor_id)
+    # Impede que o usuário siga mais de uma vez o mesmo usuário
+    if usuario_a_seguir in usuario_seguidor_obj['seguindo']:
+        raise Exception("Já segue este usuário")
+    
+    # Adiciona o usuário à lista de seguidores e de seguindo
+    usuario_seguidor_obj['seguindo'].append(usuario_a_seguir)
+    usuario_a_seguir_obj['seguidores'].append(usuario_seguidor)
 
-def curtir_postagem(usuario_id, postagem_id):
+# Função para curtir uma postagem
+def curtir_postagem(usuario, postagem):
+    postagem_obj = encontrar_postagem_por_id(postagem)  # Encontra a postagem
+    # Impede que o usuário curta a mesma postagem mais de uma vez
+    if usuario in postagem_obj['curtidores']:
+        raise Exception("Você já curtiu esta postagem")
+    postagem_obj['curtidores'].append(usuario)  # Adiciona o usuário à lista de curtidores
+
+# Função para comentar em uma postagem
+def comentar_postagem(usuario, postagem, texto):
+    if texto == "":  # Se o comentário for vazio, gera uma exceção
+        raise ValueError("O comentário não pode ser vazio")
     try:
-        usuario = encontrar_usuario_por_id(usuario_id)
-        postagem = encontrar_postagem_por_id(postagem_id)
+        postagem_obj = encontrar_postagem_por_id(postagem)  # Encontra a postagem
+        postagem_obj['comentarios'] = postagem_obj.get('comentarios', [])  # Cria a lista de comentários, se não existir
+        postagem_obj['comentarios'].append({'usuario': usuario, 'texto': texto})  # Adiciona o comentário à postagem
     except IndexError:
-        raise IndexError("Usuário ou postagem não encontrados")
-    
-    if usuario_id not in postagem['curtidas']:
-        postagem['curtidas'].append(usuario_id)
-
-
-def comentar_postagem(usuario_id, postagem_id, texto):
-    if texto == '':
-        raise ValueError("Comentário não pode ser vazio")
-    
-    try:
-        usuario = encontrar_usuario_por_id(usuario_id)
-        postagem = encontrar_postagem_por_id(postagem_id)
-    except IndexError:
-        raise IndexError("Usuário ou postagem não encontrados")
-    
-    comentario = {
-        'usuario_id': usuario_id,
-        'texto': texto
-    }
-    postagem['comentarios'].append(comentario)
-
+        raise IndexError("Postagem não encontrada")  # Caso a postagem não exista
 
 def encontrar_usuario_por_id(user_id):
-    if user_id <= 0 or user_id > len(usuarios):
-        raise IndexError("Usuário não encontrado")
-    return usuarios[user_id - 1]
-
+    for usuario in usuarios:
+        if usuario['id'] == user_id:
+            return usuario
+    raise IndexError
 
 def encontrar_postagem_por_id(post_id):
-    if post_id <= 0 or post_id > len(postagens):
-        raise IndexError("Postagem não encontrada")
     return postagens[post_id - 1]
 
+# Função para excluir um usuário
+def excluir_usuario(id_usuario):
+    usuario = encontrar_usuario_por_id(id_usuario)
+    
+    # Verifica se o usuário foi encontrado
+    if usuario is None:
+        print(f"Usuário com ID {id_usuario} não encontrado.")
+        return
+    
+    # Remover o usuário da lista de usuários
+    usuarios.remove(usuario)
+    
+    # Remover todas as postagens desse usuário
+    remover_postagens_usuario(id_usuario)
+    
+
+# Função para remover as postagens de um usuário
+def remover_postagens_usuario(id_usuario):
+    global postagens  # Usando a lista global de postagens
+
+    # Filtra as postagens que não são do usuário a ser removido
+    postagens = [postagem for postagem in postagens if postagem['usuario'] != id_usuario]
+
+    # Remover todas as curtidas e comentários do usuário
+    for postagem in postagens:
+        # Remove as curtidas do usuário
+        postagem['curtidores'] = [usuario_id for usuario_id in postagem['curtidores'] if usuario_id != id_usuario]
+        
+        # Remove os comentários feitos pelo usuário
+        postagem['comentarios'] = [comentario for comentario in postagem['comentarios'] if comentario['usuario'] != id_usuario]
 
 
-# MENU
+
+
+
+
+
+# menu
 def exibir_menu():
     while True:
         print("\n--- Menu ---")
@@ -144,4 +180,3 @@ def exibir_menu():
 
 
 #exibir_menu()
-#Terminal: python -m pytest ./teste.py
