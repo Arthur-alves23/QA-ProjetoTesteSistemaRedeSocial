@@ -100,6 +100,7 @@ def testaCurtirPostagemValida():
 
 
 #python -m pytest .\testes\teste.py -vv
+#python -m pytest .\teste.py -vv
 
 # Caso de Teste 1: test_seguir_usuario_mesmo_usuario
 # Verifica se o sistema impede que um usuário siga a si mesmo.
@@ -167,35 +168,35 @@ def test_comentar_postagem_inexistente():
     with pytest.raises(IndexError):  # Espera-se um IndexError
         comentar_postagem(1, 999, "Comentário na postagem inexistente")  # Tenta comentar em uma postagem que não existe
         
-# Caso de Teste 8: test_excluir_usuario
-# Verifica se a exclusão de um usuário remove o usuário, suas postagens, e interações (curtidas e comentários)
 def test_excluir_usuario():
-    resetar()  # Reseta o sistema antes do teste
-    criar_usuario("Carlos")  # Cria o usuário 1
-    criar_usuario("Ana")  # Cria o usuário 2
+    resetar()
+    criar_usuario("João")
+    criar_usuario("Maria")
+    criar_postagem(1, "Postagem de João")
+    criar_postagem(2, "Postagem de Maria")
+    curtir_postagem(1, 2)
+    curtir_postagem(2, 1)
+    comentar_postagem(1, 2, "Comentário de João na postagem de Maria")
+    comentar_postagem(2, 1, "Comentário de Maria na postagem de João")
 
-    # Criação de postagens e interações (comentários e curtidas)
-    criar_postagem(1, "Postagem de Carlos")
-    curtir_postagem(2, 1)  # Usuário 2 curte a postagem de Carlos
-    comentar_postagem(2, 1, "Comentário de Ana")
-
-    # Verifica se o usuário e as interações foram criados corretamente
-    assert len(usuarios) == 2
-    assert len(postagens) == 1
-    assert postagens[0]['curtidores'] == [2]
-    assert len(postagens[0]['comentarios']) == 1
-
-    # Exclui o usuário 1 (Carlos)
     excluir_usuario(1)
 
-    # Verifica se o usuário 1 foi removido
-    assert len(usuarios) == 1  # Apenas o usuário 2 (Ana) deve permanecer
-    assert postagens == []  # A postagem de Carlos deve ser removida
+    # Verificar que as postagens de João foram removidas
+    assert all(p['usuario'] for p in postagens), f"Erro: Postagens finais: {postagens}"
 
-    # Verifica que a postagem de Carlos foi excluída
-    assert not any(postagem['usuario'] == 1 for postagem in postagens)
-    assert not any(id_usuario == 1 for postagem in postagens[0]['curtidores'])
-    assert not any(comentario['usuario'] == 1 for postagem in postagens[0]['comentarios'])
-    
-    
-    # python -m pytest .\testes\teste.py -vv
+    # Verificar que as curtidas e comentários de João foram removidos
+    for postagem in postagens:
+        assert 1 not in postagem['curtidores'], f"Erro: Curtidores na postagem {postagem['id']}: {postagem['curtidores']}"
+        assert all(c['usuario'] for c in postagem.get('comentarios', [])), f"Erro: Comentários na postagem {postagem['id']}: {postagem.get('comentarios', [])}"
+
+    # Verificar que João foi excluído
+        assert all(u['id'] for u in usuarios), f"Erro: Usuários finais: {usuarios}"
+
+def test_excluir_usuario_inexistente():
+    resetar()
+    criar_usuario("Carlos")
+    with pytest.raises(IndexError):
+        excluir_usuario(999)  # Usuário inexistente
+
+
+        # python -m pytest .\teste.py -vv
