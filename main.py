@@ -6,10 +6,7 @@ proximo_id_postagem = 1
 
 # funções
 def resetar():
-    global proximo_id_usuario
-    global proximo_id_postagem
-    global usuarios
-    global postagens
+    global usuarios, postagens, proximo_id_usuario, proximo_id_postagem
     usuarios.clear()
     postagens.clear()
     proximo_id_usuario = 1
@@ -24,6 +21,7 @@ def criar_usuario(nome):
         'nome':nome,
         'seguidores':[],
         'seguindo':[]
+        
     }  
     usuarios.append(usuario)
     proximo_id_usuario += 1
@@ -91,43 +89,30 @@ def encontrar_usuario_por_id(user_id):
 def encontrar_postagem_por_id(post_id):
     return postagens[post_id - 1]
 
-# Função para excluir um usuário
-def excluir_usuario(id_usuario):
-    usuario = encontrar_usuario_por_id(id_usuario)
-    
-    # Verifica se o usuário foi encontrado
-    if usuario is None:
-        print(f"Usuário com ID {id_usuario} não encontrado.")
-        return
-    
-    # Remover o usuário da lista de usuários
-    usuarios.remove(usuario)
-    
-    # Remover todas as postagens desse usuário
-    remover_postagens_usuario(id_usuario)
-    
+def excluir_usuario(user_id):
+    global usuarios, postagens
 
-# Função para remover as postagens de um usuário
-def remover_postagens_usuario(id_usuario):
-    global postagens  # Usando a lista global de postagens
+    # Verifica se o usuário existe
+    usuario = encontrar_usuario_por_id(user_id)
 
-    # Filtra as postagens que não são do usuário a ser removido
-    postagens = [postagem for postagem in postagens if postagem['usuario'] != id_usuario]
+    # Remove o usuário da lista
+    usuarios = [u for u in usuarios if u['id'] != user_id]
 
-    # Remover todas as curtidas e comentários do usuário
+    # Remove as postagens do usuário
+    postagens = [p for p in postagens if p['usuario'] != user_id]
+
+    # Remove as curtidas feitas pelo usuário em outras postagens
     for postagem in postagens:
-        # Remove as curtidas do usuário
-        postagem['curtidores'] = [usuario_id for usuario_id in postagem['curtidores'] if usuario_id != id_usuario]
-        
-        # Remove os comentários feitos pelo usuário
-        postagem['comentarios'] = [comentario for comentario in postagem['comentarios'] if comentario['usuario'] != id_usuario]
+        if user_id in postagem['curtidores']:
+            postagem['curtidores'].remove(user_id)
 
-
-
-
-
-
-
+    # Remove os comentários feitos pelo usuário em outras postagens
+    for postagem in postagens:
+        if 'comentarios' in postagem:
+            postagem['comentarios'] = [
+                c for c in postagem['comentarios'] if c['usuario'] != user_id
+            ]
+            
 # menu
 def exibir_menu():
     while True:
@@ -137,7 +122,8 @@ def exibir_menu():
         print("3. Seguir Usuário")
         print("4. Curtir Postagem")
         print("5. Comentar em Postagem")
-        print("6. Sair")
+        print("6. Excluir Usuário")
+        print("7. Sair")
 
         opcao = input("Escolha uma opção: ")
 
@@ -171,8 +157,12 @@ def exibir_menu():
             texto = input("Digite o texto do comentário: ")
             # comentar_postagem(user_id, post_id, texto)
             print("Comentário adicionado com sucesso!")
-        
+            
         elif opcao == "6":
+            user_id = int(input("Digite o seu ID: "))
+            print("Usuário excluido!")
+        
+        elif opcao == "7":
             print("Saindo...")
             break
         else:
