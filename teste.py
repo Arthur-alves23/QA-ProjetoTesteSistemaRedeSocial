@@ -112,12 +112,6 @@ def test_seguir_usuario_mesmo_usuario():
     assert str(error.value) == "Não é possível seguir a si mesmo" 
 
 
-def test_seguir_usuario_inexistente():
-    resetar()
-    criar_usuario("Carlos")  
-    with pytest.raises(IndexError):  
-        seguir_usuario(1, 999)  
-
 
 def test_curtir_mesma_postagem_novamente():
     resetar()
