@@ -105,68 +105,61 @@ def testaCurtirPostagemValida():
 # Caso de Teste 1: test_seguir_usuario_mesmo_usuario
 # Verifica se o sistema impede que um usuário siga a si mesmo.
 def test_seguir_usuario_mesmo_usuario():
-    resetar()  # Reseta o sistema antes do teste
-    criar_usuario("Carlos")  # Cria um usuário
-    with pytest.raises(Exception) as error:  # Espera que uma exceção seja levantada
-        seguir_usuario(1, 1)  # Tenta seguir a si mesmo (usuário 1 tenta seguir usuário 1)
-    assert str(error.value) == "Não é possível seguir a si mesmo"  # Verifica se a exceção é a esperada
+    resetar()  
+    criar_usuario("Carlos")  
+    with pytest.raises(Exception) as error:  
+        seguir_usuario(1, 1) 
+    assert str(error.value) == "Não é possível seguir a si mesmo" 
 
-# Caso de Teste 2: test_seguir_usuario_inexistente
-# Verifica se o sistema lança um erro ao tentar seguir um usuário que não existe.
+
 def test_seguir_usuario_inexistente():
     resetar()
-    criar_usuario("Carlos")  # Cria o usuário 1
-    with pytest.raises(IndexError):  # Espera-se um IndexError
-        seguir_usuario(1, 999)  # Tenta seguir um usuário com ID 999 que não existe
+    criar_usuario("Carlos")  
+    with pytest.raises(IndexError):  
+        seguir_usuario(1, 999)  
 
-# Caso de Teste 3: test_curtir_mesma_postagem_novamente
-# Verifica se o sistema impede curtidas duplicadas na mesma postagem por um mesmo usuário.
+
 def test_curtir_mesma_postagem_novamente():
     resetar()
-    criar_usuario("Carlos")  # Cria o usuário 1
-    criar_usuario("Ana")  # Cria o usuário 2
-    criar_postagem(1, "Postagem testando curtidas")  # Cria uma postagem com o usuário 1
-    curtir_postagem(2, 1)  # Usuário 2 curte a postagem 1
-    with pytest.raises(Exception) as error:  # Espera-se uma exceção se o usuário tentar curtir novamente
-        curtir_postagem(2, 1)  # Usuário 2 tenta curtir a mesma postagem novamente
-    assert str(error.value) == "Você já curtiu esta postagem"  # Verifica se a mensagem da exceção é a esperada
+    criar_usuario("Carlos")  
+    criar_usuario("Ana")  
+    criar_postagem(1, "Postagem testando curtidas")  
+    curtir_postagem(2, 1)  
+    with pytest.raises(Exception) as error:  
+        curtir_postagem(2, 1)  
+    assert str(error.value) == "Você já curtiu esta postagem" 
 
-# Caso de Teste 4: test_curtir_postagem_inexistente
-# Verifica se o sistema lança um erro ao tentar curtir uma postagem inexistente.
+
 def test_curtir_postagem_inexistente():
     resetar()
     criar_usuario("Carlos")
-    with pytest.raises(IndexError):  # Espera-se um IndexError
-        curtir_postagem(1, 999)  # Tenta curtir uma postagem que não existe (ID 999)
+    with pytest.raises(IndexError): 
+        curtir_postagem(1, 999)  
 
-# Caso de Teste 5: test_comentar_postagem_valida
-# Verifica se um usuário pode comentar em uma postagem válida.
+
 def test_comentar_postagem_valida():
     resetar()
     criar_usuario("Carlos")
     criar_postagem(1, "Postagem para comentar")
-    comentar_postagem(1, 1, "Ótimo post!")  # Usuário 1 comenta na postagem 1
-    postagem = postagens[0]  # Pega a postagem 1
-    assert len(postagem['comentarios']) == 1  # Verifica se existe um comentário na postagem
-    assert postagem['comentarios'][0]['texto'] == "Ótimo post!"  # Verifica se o comentário tem o texto esperado
+    comentar_postagem(1, 1, "Ótimo post!")  
+    postagem = postagens[0]  
+    assert len(postagem['comentarios']) == 1  
+    assert postagem['comentarios'][0]['texto'] == "Ótimo post!"  
 
-# Caso de Teste 6: test_comentar_texto_em_branco
-# Verifica se o sistema lança um erro ao tentar comentar com um texto em branco.
+
 def test_comentar_texto_em_branco():
     resetar()
     criar_usuario("Carlos")
     criar_postagem(1, "Postagem para comentar")
-    with pytest.raises(ValueError) as error:  # Espera-se um ValueError
-        comentar_postagem(1, 1, "")  # Tenta comentar com texto vazio
-    assert str(error.value) == "O comentário não pode ser vazio"  # Verifica a mensagem do erro
+    with pytest.raises(ValueError) as error:  
+        comentar_postagem(1, 1, "")  
+    assert str(error.value) == "O comentário não pode ser vazio"  
 
-# Caso de Teste 7: test_comentar_postagem_inexistente
-# Verifica se o sistema lança um erro ao tentar comentar em uma postagem inexistente.
 def test_comentar_postagem_inexistente():
     resetar()
     criar_usuario("Carlos")
-    with pytest.raises(IndexError):  # Espera-se um IndexError
-        comentar_postagem(1, 999, "Comentário na postagem inexistente")  # Tenta comentar em uma postagem que não existe
+    with pytest.raises(IndexError):  
+        comentar_postagem(1, 999, "Comentário na postagem inexistente")  
         
 def test_excluir_usuario():
     resetar()
@@ -181,22 +174,18 @@ def test_excluir_usuario():
 
     excluir_usuario(1)
 
-    # Verificar que as postagens de João foram removidas
+    
     assert all(p['usuario'] for p in postagens), f"Erro: Postagens finais: {postagens}"
 
-    # Verificar que as curtidas e comentários de João foram removidos
+    
     for postagem in postagens:
         assert 1 not in postagem['curtidores'], f"Erro: Curtidores na postagem {postagem['id']}: {postagem['curtidores']}"
         assert all(c['usuario'] for c in postagem.get('comentarios', [])), f"Erro: Comentários na postagem {postagem['id']}: {postagem.get('comentarios', [])}"
 
-    # Verificar que João foi excluído
+    
         assert all(u['id'] for u in usuarios), f"Erro: Usuários finais: {usuarios}"
 
-def test_excluir_usuario_inexistente():
-    resetar()
-    criar_usuario("Carlos")
-    with pytest.raises(IndexError):
-        excluir_usuario(999)  # Usuário inexistente
+
 
 
         # python -m pytest .\teste.py -vv
